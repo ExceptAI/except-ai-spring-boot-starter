@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: except-ai-spring-boot-starter
+
+server:
+  port: 8081
