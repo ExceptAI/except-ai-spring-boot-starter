@@ -8,11 +8,12 @@
         <version>3.5.7</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>ai.except</groupId>
+    <groupId>com.github.ppyrciak</groupId>
     <artifactId>except-ai-spring-boot-starter</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
+
     <name>except-ai-spring-boot-starter</name>
-    <description>except-ai-spring-boot-starter</description>
+    <description>ExceptAI Spring Boot Starter - Zero-config error monitoring with AI analysis</description>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
