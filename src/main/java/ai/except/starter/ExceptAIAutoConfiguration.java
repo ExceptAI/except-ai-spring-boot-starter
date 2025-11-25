@@ -22,4 +22,10 @@ public class ExceptAIAutoConfiguration {
     public ExceptAIExceptionHandler exceptAIExceptionHandler(ExceptAIClient client) {
         return new ExceptAIExceptionHandler(client);
     }
+
+    @Bean
+    public ExceptAIScheduledTaskAspect exceptAIScheduledTaskAspect(ExceptAIClient client) {
+        log.info("✅ ExceptAI @Scheduled error monitoring enabled");
+        return new ExceptAIScheduledTaskAspect(client);
+    }
 }

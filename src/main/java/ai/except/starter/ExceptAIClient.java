@@ -22,7 +22,7 @@ public class ExceptAIClient {
         }
 
         try {
-            Map<String, Object> payload = buildPayload(exception, stackTrace, httpContext);
+            Map<String, Object> payload = buildPayload(exception, stackTrace, httpContext, null);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -45,7 +45,42 @@ public class ExceptAIClient {
         }
     }
 
-    private Map<String, Object> buildPayload(Exception exception, String stackTrace, Map<String, Object> httpContext) {
+    public void sendScheduledTaskError(Exception exception, String stackTrace,
+                                      String scheduledTaskClass, String scheduledTaskMethod, String cron) {
+        if (!properties.isEnabled()) {
+            return;
+        }
+
+        try {
+            Map<String, String> scheduledContext = new HashMap<>();
+            scheduledContext.put("scheduledTaskClass", scheduledTaskClass);
+            scheduledContext.put("scheduledTaskMethod", scheduledTaskMethod);
+            scheduledContext.put("scheduledTaskCron", cron);
+
+            Map<String, Object> payload = buildPayload(exception, stackTrace, null, scheduledContext);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-API-Key", properties.getApiKey());
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+
+            restTemplate.postForEntity(
+                    properties.getEndpoint(),
+                    request,
+                    String.class
+            );
+
+            log.debug("✅ Scheduled task error sent to ExceptAI: {} - {}", scheduledTaskClass, exception.getClass().getSimpleName());
+
+        } catch (Exception e) {
+            log.error("❌ Failed to send scheduled task error to ExceptAI: {}", e.getMessage());
+        }
+    }
+
+    private Map<String, Object> buildPayload(Exception exception, String stackTrace,
+                                             Map<String, Object> httpContext,
+                                             Map<String, String> scheduledContext) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("timestamp", Instant.now().toString());
         payload.put("service", properties.getService());
@@ -53,12 +88,19 @@ public class ExceptAIClient {
         payload.put("gitSha", detectGitSha()); // ✅ Auto-detect
 
         Map<String, Object> exceptionData = new HashMap<>();
-        exceptionData.put("type", exception.getClass().getSimpleName());
+        exceptionData.put("type", exception.getClass().getName());
         exceptionData.put("message", exception.getMessage());
         exceptionData.put("stackTrace", stackTrace);
 
         payload.put("exception", exceptionData);
         payload.put("http", httpContext);
+
+        // Add scheduled task context if present
+        if (scheduledContext != null) {
+            payload.put("scheduledTaskClass", scheduledContext.get("scheduledTaskClass"));
+            payload.put("scheduledTaskMethod", scheduledContext.get("scheduledTaskMethod"));
+            payload.put("scheduledTaskCron", scheduledContext.get("scheduledTaskCron"));
+        }
 
         return payload;
     }
